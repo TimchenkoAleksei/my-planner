@@ -559,7 +559,25 @@
       #routineView .rh-priority-menu {gap:3px;}
       #routineView .rh-priority-choice {font-size:10px;padding:4px;}
     }
-  </style>
+  
+    /* v2.2: readable day on phones, paper-style zoom; tablet/desktop unchanged. */
+    .mobile-day-controls {display:none;}
+    @media(max-width:660px) {
+      .top {position:relative;}
+      .top .top-inner {gap:7px;}
+      .top .sub {font-size:10px;}
+      .mobile-day-controls {display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 8px;padding:9px;background:#faf4e9;border:1px solid #d6d4c7;border-radius:12px;}
+      body:not([data-view="day"]) .mobile-day-controls {display:none;}
+      .mobile-day-controls .mobile-zoom-button {flex:1 1 auto;min-height:42px;padding:8px 9px;border-radius:8px;border:1px solid #afc4cb;background:#fffaf2;color:#2c5b72;font-size:13px;font-weight:750;}
+      .mobile-day-controls .mobile-zoom-button[aria-pressed="true"] {background:#dcebf0;border-color:#73a4b3;}
+      .mobile-day-controls .mobile-hint {flex-basis:100%;font-size:11px;line-height:1.35;color:#536975;}
+      .paper-scroller {max-height:min(72dvh,700px);min-height:350px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px;}
+      .paper-heading strong {font-size:clamp(10px,2.6vw,13px);}
+      .sidebox:first-child {display:none;}
+      .zoom-wrap {flex-basis:100%;margin-left:0;justify-content:flex-start;}
+      .zoom-wrap .tool {min-height:39px;padding:8px 11px;}
+    }
+</style>
 </head>
 <body data-view="day">
   <header class="top">
@@ -602,6 +620,12 @@
         <button class="tool" id="redoBtn" type="button" title="Повторить (Ctrl+Shift+Z)" aria-label="Повторить">↷</button>
         <div class="zoom-wrap"><button class="tool" id="zoomOut" type="button" title="Уменьшить">−</button><span id="zoomText">100%</span><button class="tool" id="zoomIn" type="button" title="Увеличить">+</button><button class="tool" id="realSizeBtn" type="button" title="Удобный масштаб для письма">Для письма</button><button class="tool" id="fitBtn" type="button" title="Вписать лист в ширину">Вписать</button></div>
       </section>
+      <div class="mobile-day-controls" aria-label="Масштаб дневного листа для телефона">
+        <button type="button" class="mobile-zoom-button" id="mobileFit" aria-pressed="true">▤ Весь лист</button>
+        <button type="button" class="mobile-zoom-button" id="mobileWrite" aria-pressed="false">✍ Крупно писать</button>
+        <button type="button" class="mobile-zoom-button" id="mobileMove" aria-pressed="false">☝ Двигать</button>
+        <div class="mobile-hint" id="mobileZoomHint">Для письма нажми «Крупно писать». Лист можно двигать пальцем в режиме «Двигать».</div>
+      </div>
       <div id="huaweiHelp" class="huawei-help" role="alert">
         <strong>Планер открыт как документ, а не как приложение.</strong>
         Если не работают кнопки, разлиновка или стилус, открой планер по HTTPS-ссылке в браузере Huawei или Chrome. Из встроенного просмотрщика файлов письмо может не работать.
@@ -994,12 +1018,22 @@
       function beginDraw(e){if(drawing||!acceptPointer(e))return; if(e.cancelable)e.preventDefault();drawing=true;activePointer=e.pointerId;try{canvas.setPointerCapture(e.pointerId);}catch(err){}snapshot();const p=pointFromEvent(e);if(tool==='eraser'){eraserLast=null;eraseBetween(p);}else{currentStroke={kind:tool,color:tool==='marker'?'#eac45d':color,width,points:[p]};strokes.push(currentStroke);redraw();}setStatus('Изменения не сохранены…',true);}
       function moveDraw(e){if(!drawing||e.pointerId!==activePointer)return;if(e.cancelable)e.preventDefault();const p=pointFromEvent(e);if(tool==='eraser')eraseBetween(p);else if(currentStroke){interpolate(currentStroke.points,p);redraw();}}
       function endDraw(e){if(!drawing)return;if(e&&e.pointerId!==activePointer)return;if(e&&tool!=='eraser'&&currentStroke)interpolate(currentStroke.points,pointFromEvent(e));drawing=false;currentStroke=null;eraserLast=null;if(e){try{canvas.releasePointerCapture(e.pointerId);}catch(err){}}activePointer=null;redraw();saveDay();updateHistory();}
-      function setTool(t){if(drawing)endDraw();tool=t;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));canvas.classList.toggle('hand',t==='hand');savePrefs();}
+      function setTool(t){if(drawing)endDraw();tool=t;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));canvas.classList.toggle('hand',t==='hand');savePrefs();updateMobileZoomControls();}
       function setColor(c){color=c;document.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('selected',b.dataset.color===c));if(tool==='eraser'||tool==='hand')setTool('pen');savePrefs();}
       function setWidth(w){width=+w;$('lineSize').value=String(width);$('sizeText').textContent=width.toFixed(1);savePrefs();}
+      function updateMobileZoomControls(){
+        const fitted=Math.min(1.4,availableWidth()/760),isFit=Math.abs(zoom-fitted)<.055;
+        if($('mobileFit'))$('mobileFit').setAttribute('aria-pressed',String(isFit));
+        if($('mobileWrite'))$('mobileWrite').setAttribute('aria-pressed',String(!isFit&&tool!=='hand'));
+        if($('mobileMove'))$('mobileMove').setAttribute('aria-pressed',String(tool==='hand'));
+        if($('mobileZoomHint'))$('mobileZoomHint').textContent=tool==='hand'
+          ? 'Перемещай увеличенный лист пальцем. Для письма нажми «Крупно писать».'
+          : isFit ? 'Общий вид. Нажми «Крупно писать», чтобы увеличить строки.'
+                  : 'Масштаб '+Math.round(zoom*100)+'%. Для прокрутки листа включи «Двигать».';
+      }
       function availableWidth(){return Math.max(280,scroller.clientWidth-32);}
-      function setZoom(v){zoom=Math.max(.48,Math.min(1.65,v));const cssWidth=Math.round(760*zoom);paper.style.setProperty('--paper-width',cssWidth+'px');$('zoomText').textContent=Math.round(zoom*100)+'%';savePrefs();requestAnimationFrame(resizeCanvas);}
-      function fit(){setZoom(Math.min(1.4,availableWidth()/760));}
+      function setZoom(v){zoom=Math.max(.33,Math.min(2.3,v));const cssWidth=Math.round(760*zoom);paper.style.setProperty('--paper-width',cssWidth+'px');$('zoomText').textContent=Math.round(zoom*100)+'%';savePrefs();requestAnimationFrame(resizeCanvas);updateMobileZoomControls();}
+      function fit(){setZoom(Math.min(1.4,availableWidth()/760));scroller.scrollTo({left:0,top:0});}
       function downloadBlob(blob,name){const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
       function rasterizeTemplate(c){
         c.save();c.scale(2,2);c.fillStyle='#fcf8ec';c.fillRect(0,0,DW,DH);
@@ -1844,6 +1878,10 @@
       document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>setColor(b.dataset.color)));
       $('lineSize').addEventListener('input',e=>setWidth(e.target.value));
       $('undoBtn').addEventListener('click',undo);$('redoBtn').addEventListener('click',redo);
+      $('mobileFit').addEventListener('click',()=>{setTool('hand');fit();});
+      $('mobileWrite').addEventListener('click',()=>{const wasSmall=zoom<.85;if(wasSmall)setZoom(1);setTool('pen');if(wasSmall)scroller.scrollTo({left:0,top:0});});
+      $('mobileMove').addEventListener('click',()=>{setTool('hand');});
+      scroller.addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();setZoom(zoom*(e.deltaY<0?1.12:.89));}},{passive:false});
       $('zoomIn').addEventListener('click',()=>setZoom(+(zoom+.15).toFixed(2)));
       $('zoomOut').addEventListener('click',()=>setZoom(+(zoom-.15).toFixed(2)));
       $('fitBtn').addEventListener('click',fit);$('realSizeBtn').addEventListener('click',()=>setZoom(1));
