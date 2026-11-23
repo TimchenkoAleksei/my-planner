@@ -577,13 +577,58 @@
       .zoom-wrap {flex-basis:100%;margin-left:0;justify-content:flex-start;}
       .zoom-wrap .tool {min-height:39px;padding:8px 11px;}
     }
+
+    /* v2.3: protected login and cloud account controls. Planner is never painted before authorization. */
+    #plannerRoot[hidden],#authGate[hidden] {display:none !important;}
+    #authGate {min-height:100dvh;display:grid;place-items:center;padding:24px 15px;background:linear-gradient(145deg,#e9f1ef,#eee5d9);}
+    .login-card {width:min(100%,420px);background:#fffaf0;border:1px solid #dfdfd2;border-radius:21px;padding:29px 25px;box-shadow:0 17px 55px rgba(49,69,70,.13);}
+    .login-icon {width:50px;height:50px;display:grid;place-items:center;background:#e3eff1;border-radius:14px;color:#4b7b91;font-size:26px;margin-bottom:14px;}
+    .login-card h2 {font-size:23px;margin:0 0 7px;letter-spacing:-.03em;color:#284e60;}
+    .login-card p {font-size:13px;color:#687b82;line-height:1.5;margin:0 0 17px;}
+    .login-card label {font-size:13px;font-weight:650;color:#365b68;display:block;margin:13px 0 5px;}
+    .login-card input {width:100%;min-height:46px;border:1px solid #cad7d6;border-radius:10px;background:#fff;padding:10px 12px;font-size:16px;outline-offset:2px;}
+    .login-card .btn {margin-top:18px;min-height:46px;width:100%;font-size:15px;}
+    .login-card .login-small {display:block;margin:13px 0 0;background:none;border:0;color:#39748b;font-size:13px;text-decoration:underline;padding:7px 0;}
+    .login-message {min-height:20px;margin-top:11px;font-size:13px;line-height:1.55;white-space:pre-line;color:#9b4b4b;}
+    .login-message.ok {color:#35755e;}
+    .cloud-user {display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;color:#456879;}
+    .cloud-user button {border:1px solid #b4cad0;border-radius:9px;background:#e9f2f2;padding:7px 10px;font-size:12px;color:#2f596b;}
+    .cloud-transfer {background:#e8f1ee;border:1px solid #c2d7d1;border-radius:12px;margin-bottom:14px;padding:12px 14px;font-size:13px;color:#315d62;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+    .cloud-transfer[hidden] {display:none !important;}
+    .cloud-transfer button {background:#dceee8;border:1px solid #9dbeb2;border-radius:9px;padding:8px 10px;color:#285d57;font-weight:700;}
+    @media(max-width:660px){.login-card{padding:23px 18px}.cloud-user{flex-basis:100%;justify-content:flex-start;}}
 </style>
 </head>
 <body data-view="day">
+  <section id="authGate" aria-label="Вход в личный планер">
+    <div class="login-card">
+      <div class="login-icon" aria-hidden="true">✎</div>
+      <h2>Мой планер</h2>
+      <p>Твои записи доступны только после входа. На разных устройствах используй один и тот же email и пароль.</p>
+      <form id="authForm">
+        <label for="authEmail">Email</label>
+        <input type="email" id="authEmail" required autocomplete="username" inputmode="email" placeholder="Твой email">
+        <label for="authPassword">Пароль</label>
+        <input type="password" id="authPassword" required autocomplete="current-password" placeholder="Пароль" minlength="6">
+        <button id="authSubmit" class="btn strong" type="submit">Войти в планер</button>
+      </form>
+      <form id="resetPasswordForm" hidden>
+        <label for="authNewPassword">Новый пароль</label>
+        <input type="password" id="authNewPassword" autocomplete="new-password" minlength="12" placeholder="Не менее 12 символов" required>
+        <button class="btn strong" type="submit">Сохранить новый пароль</button>
+      </form>
+      <button id="forgotPassword" class="login-small" type="button">Забыла пароль?</button>
+      <div id="authMessage" class="login-message" role="status" aria-live="polite"></div>
+      <p style="font-size:12px;margin:15px 0 0">Самостоятельная регистрация через планер недоступна. Аккаунты создаются в панели администратора.</p>
+    </div>
+  </section>
+  <div id="plannerRoot" hidden>
+
   <header class="top">
     <div class="top-inner">
       <div class="brand"><div class="logo" aria-hidden="true">✎</div><div><h1>Мой планер</h1><div class="sub">Рукописный ежедневник · календарь · цели · рутина</div></div></div>
-      <div class="status" id="saveStatus"><span class="dot"></span><span id="statusText">Записи хранятся на этом устройстве</span></div>
+      <div class="cloud-user"><span id="cloudEmail"></span><button id="cloudLogout" type="button">Выйти</button></div>
+      <div class="status" id="saveStatus"><span class="dot"></span><span id="statusText">Подключение к облаку…</span></div>
     </div>
   </header>
   <div class="shell">
@@ -595,6 +640,14 @@
         <button type="button" class="app-tab" role="tab" data-view="goals" aria-selected="false">◎ Цели</button>
         <button type="button" class="app-tab" role="tab" data-view="routine" aria-selected="false">✓ Рутина</button>
       </nav>
+      <div class="cloud-transfer" id="cloudLegacyBanner" hidden>
+        <span>Найдены записи из прежней версии на этом устройстве. Можно перенести их в защищённый аккаунт.</span>
+        <button id="cloudTransferLegacy" type="button">Перенести старые записи</button>
+      </div>
+      <div class="cloud-transfer" id="cloudSyncAlert" hidden>
+        <span>На другом устройстве появились обновления.</span>
+        <button id="cloudReload" type="button">Обновить записи</button>
+      </div>
       <nav id="dayNav" class="navigation" aria-label="Навигация по датам">
         <button class="btn" id="todayBtn" type="button">Сегодня</button>
         <button class="btn sm" id="prevBtn" type="button" aria-label="Предыдущий день">‹</button>
@@ -823,7 +876,7 @@
         <p class="tracker-totals rh-paper-totals" id="routineWeekStats" aria-label="Итоги недели"></p>
         <p class="rh-page-footnote">Названия и приоритеты сохраняются для всех недель; галочки — отдельно для каждой недели. Цвет можно сменить в любой момент. Добавляй строки через «+ 5 строк».</p>
       </section>
-      <div class="footer-note" id="dayFooter">В этой версии записи сохраняются <strong>только в браузере текущего устройства</strong>. Для сохранности регулярно делай резервную копию. Облачную синхронизацию подключим отдельно.</div>
+      <div class="footer-note" id="dayFooter">Записи сохраняются в аккаунте и синхронизируются через Supabase. При отсутствии сети изменения сохраняются на устройстве и отправляются позднее. Регулярно сохраняй резервные копии.</div>
     </main>
     <aside class="side">
       <section class="sidebox">
@@ -847,7 +900,7 @@
         <p>✓ Письмо стилусом, маркер и ластик.</p>
         <p>✓ Отмена и повтор, выбор цвета, масштаб.</p>
         <p>✓ Отдельные записи на каждый день, сохранение и экспорт.</p><p>✓ Новые вкладки: неделя, месяц, цели, рутина.</p>
-        <div class="hint">ИИ, отдельная система электронных задач, аккаунт и синхронизация между устройствами <b>пока не подключены</b>. Это прототип для проверки удобства письма.</div>
+        <div class="hint">Аккаунт защищён паролем. Записи синхронизируются между устройствами через личное облачное хранилище.</div>
       </section>
     </aside>
   </div>
@@ -937,8 +990,9 @@
       <p class="month-tip">Запись сохраняется в соответствующей колонке. После закрытия она видна на общем листе.</p>
     </div>
   </div>
+  </div><!-- /plannerRoot -->
   <script>
-    (() => {
+    window.bootPlanner = function () {
       'use strict';
       const DW=800, DH=1120, PREFIX='lichny-planer-day-v1:', PREF='lichny-planer-prefs-v1';
       const $=id=>document.getElementById(id);
@@ -975,14 +1029,14 @@
         for(const [a,b] of [[107,385],[622,848]])svg.appendChild(svgEl('line',{x1:400,y1:a,x2:400,y2:b,stroke:'#7199a9','stroke-width':'2.1'}));
         const mark=svgEl('text',{x:749,y:1108,fill:'#8ba1a5','font-size':'8.5','text-anchor':'end','font-family':'Arial, sans-serif'});mark.textContent='МОЙ ПЛАНЕР';svg.appendChild(mark);
       }
-      function getItem(key){try{return localStorage.getItem(key);}catch(e){storageOK=false;return null;}}
-      function setItem(key,value){try{localStorage.setItem(key,value);return true;}catch(e){storageOK=false;setStatus('Не удалось сохранить: сделай резервную копию',true);msg('Хранилище браузера недоступно. Выгрузи резервную копию.');return false;}}
+      function getItem(key){try{return window.PlannerCloud.get(key);}catch(e){storageOK=false;return null;}}
+      function setItem(key,value){try{window.PlannerCloud.set(key,value);return true;}catch(e){storageOK=false;setStatus('Не удалось сохранить: сделай резервную копию',true);msg('Хранилище браузера недоступно. Выгрузи резервную копию.');return false;}}
       function loadDay(){
         const str=getItem(PREFIX+iso(currentDate));try{const d=JSON.parse(str||'[]');strokes=Array.isArray(d)?d.filter(validStroke):[];}catch(e){strokes=[];}
-        undoHistory=[];redoHistory=[];redraw();updateHistory();setStatus(storageOK?'Сохранено в этом браузере':'Хранилище браузера недоступно',!storageOK);
+        undoHistory=[];redoHistory=[];redraw();updateHistory();setStatus(storageOK?'Сохранено на устройстве · синхронизация…':'Хранилище браузера недоступно',!storageOK);
       }
       function validStroke(s){return s&&Array.isArray(s.points)&&s.points.length>0&&['pen','marker'].includes(s.kind);}
-      function saveDay(){if(setItem(PREFIX+iso(currentDate),JSON.stringify(strokes)))setStatus('Сохранено в этом браузере');}
+      function saveDay(){if(setItem(PREFIX+iso(currentDate),JSON.stringify(strokes)))setStatus('Сохранено на устройстве · синхронизация…');}
       function savePrefs(){setItem(PREF,JSON.stringify({color,width,zoom,tool}));}
       function snapshot(){undoHistory.push(JSON.stringify(strokes));if(undoHistory.length>40)undoHistory.shift();redoHistory=[];updateHistory();}
       function updateHistory(){ $('undoBtn').disabled=!undoHistory.length;$('redoBtn').disabled=!redoHistory.length;$('undoBtn').style.opacity=undoHistory.length?'1':'.4';$('redoBtn').style.opacity=redoHistory.length?'1':'.4'; }
@@ -1042,11 +1096,11 @@
         c.fillStyle='#4d8ba4';c.font='bold 19px Arial';c.fillText('ПЛАНЫ НА ДЕНЬ',46,45);c.font='bold 12px Arial';c.textAlign='right';c.fillText(currentDate.toLocaleDateString('ru-RU'),754,44);c.textAlign='left';c.fillStyle='#7293a0';c.font='10px Arial';const days=['ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ'];days.forEach((day,i)=>c.fillText(day,46+i*100,77));c.restore();
       }
       function exportPage(){const out=document.createElement('canvas');out.width=1600;out.height=2240;const c=out.getContext('2d');rasterizeTemplate(c);configureContext(c);for(const s of strokes.filter(x=>x.kind==='marker'))paintStroke(c,s);for(const s of strokes.filter(x=>x.kind==='pen'))paintStroke(c,s);out.toBlob(blob=>{if(blob)downloadBlob(blob,'plan-na-den-'+iso(currentDate)+'.png');},'image/png');}
-      function exportJSON(){const days={};try{for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.startsWith(PREFIX)){try{days[key.slice(PREFIX.length)]=JSON.parse(localStorage.getItem(key));}catch(e){}}}}catch(e){days[iso(currentDate)]=strokes;}
-        const weekNotes={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(WEEK_NOTES))weekNotes[k.slice(WEEK_NOTES.length)]=localStorage.getItem(k);}}catch(e){}
-        const weekInk={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(WEEK_INK)){try{weekInk[k.slice(WEEK_INK.length)]=JSON.parse(localStorage.getItem(k));}catch(_){}}}}catch(_){}
-        const monthInk={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(MONTH_INK)){try{monthInk[k.slice(MONTH_INK.length)]=JSON.parse(localStorage.getItem(k));}catch(_){}}}}catch(_){}
-        const monthFills={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(MONTH_FILL)){const v=localStorage.getItem(k);if(/^#[0-9a-f]{6}$/i.test(v||''))monthFills[k.slice(MONTH_FILL.length)]=v;}}}catch(_){}
+      function exportJSON(){const days={};try{for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.startsWith(window.PlannerCloud.ns+PREFIX)){try{days[key.slice((window.PlannerCloud.ns+PREFIX).length)]=JSON.parse(localStorage.getItem(key));}catch(e){}}}}catch(e){days[iso(currentDate)]=strokes;}
+        const weekNotes={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(window.PlannerCloud.ns+WEEK_NOTES))weekNotes[k.slice((window.PlannerCloud.ns+WEEK_NOTES).length)]=localStorage.getItem(k);}}catch(e){}
+        const weekInk={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(window.PlannerCloud.ns+WEEK_INK)){try{weekInk[k.slice((window.PlannerCloud.ns+WEEK_INK).length)]=JSON.parse(localStorage.getItem(k));}catch(_){}}}}catch(_){}
+        const monthInk={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(window.PlannerCloud.ns+MONTH_INK)){try{monthInk[k.slice((window.PlannerCloud.ns+MONTH_INK).length)]=JSON.parse(localStorage.getItem(k));}catch(_){}}}}catch(_){}
+        const monthFills={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(window.PlannerCloud.ns+MONTH_FILL)){const v=localStorage.getItem(k);if(/^#[0-9a-f]{6}$/i.test(v||''))monthFills[k.slice((window.PlannerCloud.ns+MONTH_FILL).length)]=v;}}}catch(_){}
         const handwrittenGoals=Object.fromEntries(['heading','week','month','cycle'].map(k=>[k,loadJSON(GOAL_HAND_KEY+k,[])]));
         const routineHandInk=Object.fromEntries([...routineHandRows.work,...routineHandRows.home].map(id=>[id,rhInk(id)]));
         const payload={app:'lichny-planer',version:11,exported:new Date().toISOString(),days,weekNotes,weekInk,monthInk,monthFills,handwrittenGoals,goals,cycleStart,routineItems,routineDone,routineHandRows,routineHandInk,routineHandChecks,routineTypedNames,routineTextAlign,routinePriorities};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),'moi-zapisi-'+iso(currentDate)+'.json');msg('Резервная копия всех разделов готова');}
@@ -1330,7 +1384,7 @@
         const ink=Array.isArray(raw)?raw.filter(v=>validStroke(v)&&v.points.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))):[];
         weekInkCache.set(date,ink);return ink;
       }
-      function weekSave(date){if(setItem(WEEK_INK+date,JSON.stringify(weekDocument(date))))setStatus('Сохранено в этом браузере');}
+      function weekSave(date){if(setItem(WEEK_INK+date,JSON.stringify(weekDocument(date))))setStatus('Сохранено на устройстве · синхронизация…');}
       function weekInkWritten(date){return weekDocument(date).length>0;}
       function weekDrawCanvas(date){
         const c=weekCanvases.get(date);if(!c)return;
@@ -1954,8 +2008,333 @@
         const help=$('huaweiHelp');
         if(help){help.style.display='block';help.textContent='Это локальный HTML-файл. Чтобы надежнее писать стилусом и сохранять записи, открой размещённый планер по HTTPS-ссылке в браузере.';}
       }
-      if('serviceWorker'in navigator && /^https?:$/.test(location.protocol)){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
-    })();
+      
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js"></script>
+  <script>
+/* My Planner v2.4. Faster persistent session and automatic sync.
+   All secrets stay on Supabase. The browser uses ONLY the publishable API key.
+   Existing pre-account localStorage entries remain untouched until their owner imports them.
+*/
+(() => {
+  'use strict';
+  const URL = 'https://txxgzhiwqfyytcjllpbf.supabase.co';
+  const KEY = 'sb_publishable_BvxWd2wL7nLCU0oMAVUc3g_cWAt23AG';
+  const $ = id => document.getElementById(id);
+  const gate = $('authGate'), app = $('plannerRoot'), email = $('authEmail');
+  const message = $('authMessage'), loginForm = $('authForm'), loginButton = $('authSubmit');
+  const resetForm = $('resetPasswordForm');
+  const syncLabel = $('statusText');
+  let api, user = null, prefix = '', outboxKey = '', outbox = {};
+  let initialized = false, starting = false, quitting = false, syncing = false, pulling = false, timer = null, recovery = false;
+  let lastLocalEdit = 0, lastInteraction = 0, remoteChangesWaiting = false, refreshInterval = null, remoteReloadTimer = null;
+  // A mobile browser may restore the login session before the remote database responds.
+  // The UI must not clear the existing session simply because getUser() is slow.
+  ['pointerdown','pointerup','keydown','input'].forEach(type => document.addEventListener(type, () => {lastInteraction=Date.now();}, {capture:true,passive:true}));
+  const ignoredPrefix = 'lp-account:';
+  const localOnlyKeys=new Set(['lichny-planer-prefs-v1','lichny-planer-last-view-v2']);
+
+  function authMessage(text, good=false) {message.textContent=text;message.classList.toggle('ok',good);}
+  function syncMessage(text, warning=false) {
+    if (!syncLabel) return;
+    syncLabel.textContent=text;
+    const dot = document.querySelector('#saveStatus .dot');
+    if(dot)dot.style.background=warning?'#ce9b60':'#55a28b';
+  }
+  function asError(error) {
+    const s=String(error?.message||error||'');
+    if(/invalid login credentials/i.test(s))return 'Неверный email или пароль.';
+    if(/email not confirmed/i.test(s))return 'Подтверди email, затем войди снова.';
+    if(/rate limit|too many/i.test(s))return 'Слишком много попыток. Повтори позже.';
+    if(/failed to fetch|network|timeout/i.test(s))return 'Не удалось связаться с сервером. Проверь интернет.';
+    return s || 'Не удалось выполнить запрос.';
+  }
+  function readOutbox() {
+    try {
+      const a=JSON.parse(localStorage.getItem(outboxKey)||'[]');
+      return Array.isArray(a)?Object.fromEntries(a.filter(k=>typeof k==='string'&&!localOnlyKeys.has(k)).map(k=>[k,true])):{};
+    }catch(_){return {};}
+  }
+  function saveOutbox() {
+    // Only store the dirty key names. Ink data stays in one local copy, not twice.
+    localStorage.setItem(outboxKey,JSON.stringify(Object.keys(outbox)));
+  }
+  const store={
+    ns:'',
+    get(key) { if(!user)throw Error('Сначала войди в аккаунт');return localStorage.getItem(prefix+key); },
+    set(key,value) {
+      if(!user)throw Error('Сначала войди в аккаунт');
+      const val=String(value);
+      localStorage.setItem(prefix+key,val);
+      if(localOnlyKeys.has(key))return;
+      outbox[key]=true;
+      saveOutbox();
+      lastLocalEdit=Date.now();
+      syncMessage('Сохраняется в облако…');
+      scheduleFlush();
+    },
+    flush: ()=>flush(),
+  };
+  window.PlannerCloud=store;
+
+  function scheduleFlush() {if(timer)clearTimeout(timer);timer=setTimeout(flush,950);}
+  async function flush() {
+    if(!user||syncing||!Object.keys(outbox).length)return !Object.keys(outbox).length;
+    syncing=true;
+    try{
+      // Small batches are important for ink drawings and mobile networks.
+      while(Object.keys(outbox).length){
+        const batch=Object.keys(outbox).slice(0,30).map(key=>[key,localStorage.getItem(prefix+key)]);
+        const rows=batch.map(([storage_key,value])=>({user_id:user.id,storage_key,value,updated_at:new Date().toISOString()}));
+        const {error}=await api.from('planner_entries').upsert(rows,{onConflict:'user_id,storage_key'});
+        if(error)throw error;
+        for(const [key,oldValue] of batch){if(localStorage.getItem(prefix+key)===oldValue)delete outbox[key];}
+        saveOutbox();
+      }
+      syncMessage('✓ Сохранено в облаке');
+      return true;
+    }catch(err){
+      syncMessage('Нет связи — изменения ожидают синхронизации',true);
+      return false;
+    }finally{syncing=false;if(Object.keys(outbox).length&&navigator.onLine){timer=setTimeout(flush,7000);}}
+  }
+
+  function tryApplyRemote() {
+    if(!remoteChangesWaiting || !initialized || quitting || !user)return;
+    if(remoteReloadTimer)clearTimeout(remoteReloadTimer);
+    const editingField=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+    const safe=document.visibilityState==='visible' &&
+      !editingField && !syncing && !pulling && !Object.keys(outbox).length &&
+      Date.now()-Math.max(lastInteraction,lastLocalEdit)>6500;
+    if(safe) {
+      syncMessage('✓ Получены записи с другого устройства');
+      window.location.reload();
+    } else {
+      remoteReloadTimer=setTimeout(tryApplyRemote,2000);
+    }
+  }
+  async function pull(initial=false){
+    if(!user || pulling)return 0;
+    pulling=true;
+    let offset=0,changed=0;
+    try {
+      while(true){
+        const {data,error}=await api.from('planner_entries')
+          .select('storage_key,value').eq('user_id',user.id)
+          .order('storage_key',{ascending:true}).range(offset,offset+499);
+        if(error)throw error;
+        const rows=data||[];
+        for(const row of rows){
+          if(typeof row.storage_key!=='string'||typeof row.value!=='string'||localOnlyKeys.has(row.storage_key))continue;
+          // Keep newer local edits until they successfully reach the server.
+          if(Object.prototype.hasOwnProperty.call(outbox,row.storage_key))continue;
+          const path=prefix+row.storage_key;
+          if(localStorage.getItem(path)!==row.value){localStorage.setItem(path,row.value);changed++;}
+        }
+        if(rows.length<500)break;
+        offset+=500;
+        if(offset>10000)throw Error('Слишком много записей, нужна проверка архива.');
+      }
+    } finally {pulling=false;}
+    if(changed>0){
+      remoteChangesWaiting=true;
+      $('cloudSyncAlert').hidden=false;
+      syncMessage('Получены изменения из облака — обновляем лист');
+      tryApplyRemote();
+    } else if(initial && Object.keys(outbox).length===0){
+      syncMessage('✓ Записи синхронизированы');
+    }
+    return changed;
+  }
+
+  function localLegacyKeys(){
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k?.startsWith('lichny-planer-')&&!k.startsWith(ignoredPrefix))keys.push(k);
+    }
+    return keys;
+  }
+  async function transferLegacy(){
+    const keys=localLegacyKeys();
+    if(!keys.length){$('cloudLegacyBanner').hidden=true;return;}
+    const warning='Перенести '+keys.length+' сохранённых частей старого планера в этот аккаунт?\n\nЕсли такие даты уже есть в облаке, записи с этого устройства заменят их. Старые локальные записи не будут удалены.';
+    if(!confirm(warning))return;
+    const button=$('cloudTransferLegacy');button.disabled=true;button.textContent='Перенос…';
+    try{
+      for(const k of keys){const v=localStorage.getItem(k);if(v!==null)store.set(k,v);}
+      if(!await flush())throw Error('Нет соединения. Перенос сохранён на этом устройстве и повторится при восстановлении интернета.');
+      $('cloudLegacyBanner').hidden=true;
+      alert('Старые записи перенесены. Они уже доступны в твоём аккаунте. Сейчас планер обновится.');
+      window.location.reload();
+    }catch(err){alert(asError(err));}finally{button.disabled=false;button.textContent='Перенести старые записи';}
+  }
+  function clearLocalAccountCache(){
+    if(!prefix)return;
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i);if(key?.startsWith(prefix))keys.push(key);
+    }
+    keys.forEach(k=>localStorage.removeItem(k));
+    localStorage.removeItem(outboxKey);
+  }
+  async function signOut(){
+    if(quitting)return;
+    if(!await flush()){
+      alert('Есть несинхронизированные изменения. Сначала подключи интернет, чтобы не потерять записи при выходе.');
+      return;
+    }
+    if(!confirm('Выйти из планера на этом устройстве? Облачные записи сохранятся.'))return;
+    quitting=true;
+    app.hidden=true;
+    try{
+      const {error}=await api.auth.signOut();
+      if(error)throw error;
+      clearLocalAccountCache();
+      window.location.reload();
+    }catch(err){app.hidden=false;quitting=false;alert('Не удалось выйти: '+asError(err));}
+  }
+  async function refresh(){
+    if(!initialized||!user||syncing||pulling||quitting)return;
+    try {
+      if(Object.keys(outbox).length && !await flush())return;
+      await pull(false);
+    } catch(err) {
+      syncMessage('Нет связи с облаком — записи на устройстве сохранены',true);
+    }
+  }
+  async function startApp(authorizedUser){
+    if(initialized||starting)return;
+    starting=true;
+    authMessage('Проверяем доступ к планеру…',true);
+    try {
+      const {data:membership,error:memberError}=await api.from('planner_members')
+        .select('user_id').eq('user_id',authorizedUser.id).maybeSingle();
+      if(memberError) {
+        // Network problems are NOT a reason to discard the saved login session.
+        authMessage('Не удалось проверить доступ: '+asError(memberError)+'\nКогда сеть восстановится, обнови страницу — повторный ввод пароля не нужен.');
+        return;
+      }
+      if(!membership){
+        authMessage('Аккаунт существует, но доступ к личному планеру ещё не разрешён.');
+        return;
+      }
+      user=authorizedUser;
+      prefix='lp-account:'+user.id+':';
+      outboxKey='lp-outbox:'+user.id;
+      store.ns=prefix;
+      outbox=readOutbox();
+      initialized=true;
+      $('cloudEmail').textContent=user.email||'Мой аккаунт';
+      $('cloudLogout').addEventListener('click',signOut);
+      $('cloudTransferLegacy').addEventListener('click',transferLegacy);
+      $('cloudReload').addEventListener('click',async()=>{
+        if(Object.keys(outbox).length && !await flush())return;
+        window.location.reload();
+      });
+      if(localLegacyKeys().length)$('cloudLegacyBanner').hidden=false;
+      app.hidden=false;
+      window.bootPlanner();
+      gate.hidden=true;
+      // The drawing interface starts from its local cache immediately;
+      // remote records download asynchronously, so slow mobile data won't block the UI.
+      syncMessage(Object.keys(outbox).length?'Ожидает отправки изменений…':'Загружаем записи из облака…',!!Object.keys(outbox).length);
+      if(Object.keys(outbox).length)scheduleFlush();
+      void pull(true).catch(()=>syncMessage('Облако временно недоступно — локальные записи сохранены',true));
+      if(refreshInterval)clearInterval(refreshInterval);
+      refreshInterval=setInterval(refresh,9000);
+      document.addEventListener('visibilitychange',()=>{
+        if(document.visibilityState==='visible') {
+          if(remoteChangesWaiting)tryApplyRemote();
+          else void refresh();
+        }
+      });
+      window.addEventListener('online',refresh);
+      window.addEventListener('focus',()=>{
+        if(remoteChangesWaiting)tryApplyRemote();
+        else if(Date.now()-lastLocalEdit>2500)void refresh();
+      });
+    } catch(err){
+      initialized=false;app.hidden=true;gate.hidden=false;
+      authMessage('Ошибка запуска планера: '+asError(err));
+    } finally {starting=false;}
+  }
+  async function login(e){
+    e.preventDefault();
+    if(!api)return authMessage('Сервис входа недоступен. Обнови страницу с интернетом.');
+    loginButton.disabled=true;
+    authMessage('Вход в аккаунт…',true);
+    try{
+      const {data,error}=await api.auth.signInWithPassword({email:email.value.trim(),password:$('authPassword').value});
+      if(error)throw error;
+      $('authPassword').value='';
+      if(!data?.user)throw Error('Сервер не вернул пользователя.');
+      await startApp(data.user);
+    }catch(err){authMessage(asError(err));}
+    finally{loginButton.disabled=false;}
+  }
+  async function passwordReset(){
+    if(!api)return authMessage('Сервис входа недоступен.');
+    const value=email.value.trim();
+    if(!value)return authMessage('Введи email в поле выше, затем нажми «Забыла пароль?».');
+    authMessage('Отправка письма…',true);
+    const {error}=await api.auth.resetPasswordForEmail(value,{redirectTo:window.location.origin+window.location.pathname});
+    authMessage(error?asError(error):'Если аккаунт существует, письмо для смены пароля придёт на его почту.',!error);
+  }
+  async function changePassword(e){
+    e.preventDefault();
+    const value=$('authNewPassword').value;
+    if(value.length<12)return authMessage('Нужно не менее 12 символов.');
+    const {error}=await api.auth.updateUser({password:value});
+    if(error)return authMessage(asError(error));
+    recovery=false;resetForm.hidden=true;loginForm.hidden=false;
+    $('authNewPassword').value='';
+    authMessage('Пароль изменён. Можешь войти с новым паролем.',true);
+  }
+  async function init(){
+    loginForm.addEventListener('submit',login);
+    $('forgotPassword').addEventListener('click',passwordReset);
+    resetForm.addEventListener('submit',changePassword);
+    if(!window.supabase?.createClient){
+      authMessage('Не загрузился модуль защищённого входа. Проверь интернет и обнови страницу.');
+      return;
+    }
+    try{
+      api=window.supabase.createClient(URL,KEY,{auth:{storageKey:'my-planner-v23-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+      api.auth.onAuthStateChange((event,session)=>{
+        if(event==='PASSWORD_RECOVERY'){
+          recovery=true;
+          loginForm.hidden=true;resetForm.hidden=false;
+          authMessage('Введи новый пароль.',true);
+        }
+        if(event==='SIGNED_OUT'&&!quitting&&initialized){
+          // A genuinely expired/revoked session returns to the gate without
+          // triggering a reload loop. Do not delete unsent local edits.
+          if(refreshInterval)clearInterval(refreshInterval);
+          initialized=false;user=null;app.hidden=true;gate.hidden=false;
+          authMessage('Сеанс завершён. Войди ещё раз; локальные записи сохранены.');
+        }
+      });
+      authMessage('Проверяем сохранённый вход…',true);
+      const {data:{session},error}=await api.auth.getSession();
+      if(error)throw error;
+      if(session?.access_token&&session.user){
+        if(!recovery)await startApp(session.user);
+        return;
+      }
+      authMessage('Войди по email и паролю.',true);
+    }catch(err){
+      // A timeout on refresh never deliberately signs the user out.
+      authMessage('Сеанс не удалось проверить: '+asError(err)+'\nПопробуй обновить страницу, когда сеть будет стабильной.');
+    }
+  }
+  init();
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+  }
+})();
+
   </script>
 </body>
 </html>
