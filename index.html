@@ -80,6 +80,29 @@
     @media(max-width:1080px) {.shell {grid-template-columns:minmax(0,1fr);max-width:950px;} .side {position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));} .sidebox:last-child {grid-column:1/-1;} .paper-heading strong{font-size:clamp(12px,2.1vw,19px);} .weekday{font-size:clamp(7px,1.26vw,11px);} }
     @media(max-width:660px) {.top{padding:11px 13px;} .shell{padding:12px 8px 30px;gap:11px;} .brand .logo{width:35px;height:35px;border-radius:10px;} h1{font-size:16px;} .status{font-size:11px;} .navigation{gap:5px;padding:0 3px;} .nav-title{font-size:15px;min-width:135px;} .btn{min-height:36px;padding:6px 9px;} .date-input{max-width:135px;min-height:36px;font-size:13px;} .tools{gap:4px;padding:7px;border-radius:12px;} .tool{padding:7px 8px;font-size:12px;} .zoom-wrap{margin-left:0;} .paper-scroller{padding:10px;min-height:300px;border-radius:12px;} .side{grid-template-columns:1fr;} .sidebox:last-child{grid-column:auto;} .paper-heading strong{font-size:clamp(9px,2.45vw,19px);} .paper-heading span{font-size:clamp(7px,1.5vw,12px);} .weekday{font-size:clamp(6px,1.35vw,11px);} }
 
+
+    /* Desktop-only positioned keyboard text; all devices can read the saved notes. */
+    .typed-layer {position:absolute;inset:0;z-index:8;pointer-events:none;container-type:inline-size;}
+    .typed-layer.is-placing {pointer-events:auto;cursor:text;background:rgba(111,159,179,.045);}
+    .typed-note {position:absolute;min-width:15%;max-width:96%;z-index:2;pointer-events:none;color:#284f66;}
+    .typed-note textarea {display:block;box-sizing:border-box;width:100%;min-height:1.6em;overflow:hidden;resize:none;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid transparent;border-radius:3px;padding:0 3px;margin:0;background:transparent;color:#284f66;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:var(--typed-font,14px);line-height:1.45;outline-offset:1px;letter-spacing:0;}
+    .typed-note textarea:focus {border-color:#86b9c4;background:rgba(255,253,245,.96);outline:1px solid #a9d1d8;}
+    .typed-note-actions {display:none;position:absolute;z-index:5;right:0;top:-25px;gap:2px;background:rgba(252,249,241,.96);border-radius:5px;padding:2px;box-shadow:0 1px 5px #71888a55;}
+    .typed-note-actions button {border:0;background:transparent;color:#315f74;cursor:pointer;font-size:13px;min-width:24px;min-height:22px;padding:1px 4px;}
+    .typed-note-actions .typed-drag {cursor:grab;touch-action:none;}
+    .typed-note-actions .typed-remove {color:#ad5551;}
+    .typed-hint {font-size:12px;color:#627e86;display:none;margin:0 0 10px;background:#f0f8f8;padding:8px 10px;border-radius:9px;}
+    .typed-hint.active {display:block;}
+    .desktop-text-tool {display:none!important;}
+    @media (min-width:850px) and (hover:hover) and (pointer:fine) {
+      .desktop-text-tool {display:inline-flex!important;}
+      .typed-note {pointer-events:auto;}
+      .typed-note textarea {pointer-events:auto;}
+      .typed-note:hover .typed-note-actions,.typed-note:focus-within .typed-note-actions {display:flex;}
+    }
+    @media print {.typed-note-actions,.typed-hint,.desktop-text-tool{display:none!important;}.typed-note textarea{border:0!important;}}
+    .paper {container-type:inline-size;}
+
     /* v0.8: daily habits counted inside a Monday–Sunday week, by category */
     .routine-summary-cards {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px;}
     .routine-stat {border:1px solid #d9e6e4;border-radius:13px;background:#f7fbf9;padding:13px 14px;min-width:0;}
@@ -660,6 +683,7 @@
         <button class="tool" data-tool="marker" type="button" title="Полупрозрачный маркер"><span aria-hidden="true">▰</span> Маркер</button>
         <button class="tool" data-tool="eraser" type="button" title="Ластик стирает часть штриха"><span aria-hidden="true">◫</span> Ластик</button>
         <button class="tool" data-tool="hand" type="button" title="Прокрутка страницы пальцем"><span aria-hidden="true">✋</span> Двигать</button>
+        <button class="tool desktop-text-tool" data-tool="text" id="dayTypeBtn" type="button" title="Щёлкни по листу, чтобы вставить печатный текст">⌨ Текст</button>
         <span class="divider" aria-hidden="true"></span>
         <div class="colors" aria-label="Цвет пера">
           <button class="swatch selected" type="button" data-color="#284f66" style="background:#284f66" aria-label="Синие чернила"></button>
@@ -673,6 +697,7 @@
         <button class="tool" id="redoBtn" type="button" title="Повторить (Ctrl+Shift+Z)" aria-label="Повторить">↷</button>
         <div class="zoom-wrap"><button class="tool" id="zoomOut" type="button" title="Уменьшить">−</button><span id="zoomText">100%</span><button class="tool" id="zoomIn" type="button" title="Увеличить">+</button><button class="tool" id="realSizeBtn" type="button" title="Удобный масштаб для письма">Для письма</button><button class="tool" id="fitBtn" type="button" title="Вписать лист в ширину">Вписать</button></div>
       </section>
+      <p class="typed-hint" id="dayTypeHint">⌨ Щёлкни по строке листа. Затем напечатай текст. За ⠿ можно передвинуть запись.</p>
       <div class="mobile-day-controls" aria-label="Масштаб дневного листа для телефона">
         <button type="button" class="mobile-zoom-button" id="mobileFit" aria-pressed="true">▤ Весь лист</button>
         <button type="button" class="mobile-zoom-button" id="mobileWrite" aria-pressed="false">✍ Крупно писать</button>
@@ -769,6 +794,7 @@
           <div class="period-buttons"><button class="btn sm" id="monthPrev" aria-label="Предыдущий месяц">‹</button><span class="period-name" id="monthLabel"></span><button class="btn sm" id="monthNext" aria-label="Следующий месяц">›</button><button class="btn" id="monthToday">Сегодня</button></div>
         </div>
         <div class="month-ink-tools" aria-label="Инструменты месяца">
+          <button type="button" class="btn desktop-text-tool" id="monthTopType" aria-pressed="false">⌨ Текст</button>
           <button type="button" class="btn" id="monthTopPen" aria-pressed="false">✍ Писать в клетках</button>
           <button type="button" class="btn" id="monthTopEraser" aria-pressed="false">⌫ Ластик</button>
           <button type="button" class="btn" id="monthTopFill" aria-pressed="false">▧ Заливка</button>
@@ -791,6 +817,7 @@
           <button class="btn sm" id="monthTopClearFill" type="button" title="Убрать заливку из выбранной клетки">Без цвета</button>
           <span class="month-tip">Выбери цвет → коснись клетки. Нажатие на число открывает день.</span>
         </div>
+        <p class="typed-hint" id="monthTypeHint">⌨ Щёлкни в клетке месяца, чтобы добавить печатную заметку.</p>
         <div class="calendar-shell"><div class="month-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div id="monthGrid" class="month-grid"></div></div>
         <p class="view-note">Заливка находится под рукописными заметками. Перо пишет, ластик стирает штрихи (толщину можно менять). Дневной лист открывается только по цифре даты.</p>
       </section>
@@ -798,10 +825,13 @@
         <div class="section-top"><div><h2>Моя неделя</h2><p class="section-desc">Все семь дней с понедельника по воскресенье. В каждом листе — 15 строк для письма стилусом.</p></div>
           <div class="period-buttons"><button class="btn sm" id="weekPrev" aria-label="Предыдущая неделя">‹</button><span class="period-name" id="weekLabel"></span><button class="btn sm" id="weekNext" aria-label="Следующая неделя">›</button><button class="btn" id="weekToday">Сегодня</button></div>
         </div>
+        <p class="typed-hint" id="weekTypeHint">⌨ Выбери «Текст» под днём недели, затем щёлкни по его листу.</p>
         <div class="week-grid" id="weekGrid"></div>
         <p class="view-note">Нажми «✍ Писать», чтобы писать прямо в маленьком листе, или «Увеличить» для комфортного письма. Все семь листов всегда остаются в обзоре недели. На телефоне они расположены в две колонки — пролистывай вниз. Записи каждой даты сохраняются отдельно в этом браузере.</p>
       </section>
       <section id="goalsView" class="extra-view workspace-card" aria-label="Мои цели">
+        <button type="button" class="btn desktop-text-tool" id="goalTypeBtn" aria-pressed="false" style="margin:0 0 10px">⌨ Текст на листах целей</button>
+        <p class="typed-hint" id="goalTypeHint">⌨ Щёлкни по листу «Неделя», «Месяц» или «12 недель», чтобы добавить запись.</p>
         <div class="section-top">
           <div><h2>Мои цели</h2><p class="section-desc">Рукописный лист: от ближайших шагов к цели на 12 недель.</p></div>
         </div>
@@ -995,6 +1025,9 @@
     window.bootPlanner = function () {
       'use strict';
       const DW=800, DH=1120, PREFIX='lichny-planer-day-v1:', PREF='lichny-planer-prefs-v1';
+      const TYPED_PREFIX='lichny-planer-typed-v1:';
+      const desktopTyping=window.matchMedia('(min-width:850px) and (hover:hover) and (pointer:fine)').matches && !/Android|iPad|iPhone|Mobile/i.test(navigator.userAgent);
+      let typedMode=null;
       const $=id=>document.getElementById(id);
       const canvas=$('inkCanvas'), ctx=canvas.getContext('2d'), paper=$('paper'), scroller=$('paperScroller');
       let currentDate=atMidnight(new Date());
@@ -1031,9 +1064,122 @@
       }
       function getItem(key){try{return window.PlannerCloud.get(key);}catch(e){storageOK=false;return null;}}
       function setItem(key,value){try{window.PlannerCloud.set(key,value);return true;}catch(e){storageOK=false;setStatus('Не удалось сохранить: сделай резервную копию',true);msg('Хранилище браузера недоступно. Выгрузи резервную копию.');return false;}}
+      // Keyboard notes use separate cloud keys so they never overwrite handwriting.
+      const typedCanPlace=(target)=>desktopTyping && typedMode===target;
+      function typedKey(kind,id){return TYPED_PREFIX+kind+':'+id;}
+      function typedList(kind,id){
+        const v=loadJSON(typedKey(kind,id),[]);
+        return Array.isArray(v)?v.filter(n=>n&&typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Number.isFinite(n.w)).slice(0,100):[];
+      }
+      function typedSave(kind,id,notes){setItem(typedKey(kind,id),JSON.stringify(notes));}
+      function typedModeUpdate(){
+        const targets=[['day','dayTypeHint','dayTypeBtn'],['month','monthTypeHint','monthTopType'],['goal','goalTypeHint','goalTypeBtn']];
+        for(const [target,hint,btn] of targets){
+          const h=$(hint),b=$(btn);if(h)h.classList.toggle('active',typedMode===target);
+          if(b){b.classList.toggle('active',typedMode===target);b.setAttribute('aria-pressed',String(typedMode===target));}
+        }
+        const weekHint=$('weekTypeHint');if(weekHint)weekHint.classList.toggle('active',!!typedMode?.startsWith('week:'));
+        document.querySelectorAll('.typed-layer').forEach(layer=>layer.classList.toggle('is-placing',typedCanPlace(layer.dataset.typedTarget)));
+        document.querySelectorAll('[data-typed-week]').forEach(b=>{
+          const on=typedMode===('week:'+b.dataset.typedWeek);b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+        });
+      }
+      function typedToggle(target){
+        if(!desktopTyping)return;
+        const turningOff=typedMode===target;typedMode=turningOff?null:target;
+        if(turningOff&&target==='day'){setTool('pen');return;}
+        if(typedMode==='day'){tool='text';document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool==='text'));canvas.classList.add('hand');}
+        if(target!=='day'&&tool==='text'){tool='pen';canvas.classList.remove('hand');document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool==='pen'));}
+        if(typedMode==='month')monthSetMode('view');
+        typedModeUpdate();
+      }
+      function typedLayer(parent,kind,id){
+        if(!parent)return;
+        const target=kind==='day'?'day':kind==='month'?'month':kind==='goal'?'goal':'week:'+id;
+        let layer=parent.querySelector(':scope > .typed-layer');
+        if(!layer){
+          layer=document.createElement('div');layer.className='typed-layer';parent.appendChild(layer);
+          if('ResizeObserver'in window){new ResizeObserver(()=>{layer.querySelectorAll('textarea').forEach(t=>{t.style.height='0px';t.style.height=Math.min(720,Math.max(t.scrollHeight,19))+'px';});}).observe(parent);}
+          layer.addEventListener('click',e=>{
+            if(!typedCanPlace(layer.dataset.typedTarget)||e.target!==layer)return;
+            e.preventDefault();e.stopPropagation();
+            const bounds=layer.getBoundingClientRect();
+            let x=(e.clientX-bounds.left)/bounds.width*100,y=(e.clientY-bounds.top)/bounds.height*100;
+            let w=kind==='day'?38:kind==='month'?88:kind==='week'?88:87;
+            if(kind==='day'){
+              const dx=x/100*DW,dy=y/100*DH;
+              const section=sections.find(s=>dx>=s.left&&dx<=s.right&&dy>=s.top&&dy<=s.bottom);
+              if(section){x=Math.max((section.left+12)/DW*100,Math.min(x,(section.right-100)/DW*100));w=Math.min(39,(section.right/DW*100)-x-2);y=Math.max((section.top+26)/DH*100,y);}
+              else {x=Math.max(7,Math.min(x,76));y=Math.max(10,Math.min(y,92));}
+            } else {x=Math.max(4,Math.min(x,93-w));y=Math.max(kind==='goal'&&id==='heading'?14:5,Math.min(y,90));}
+            const items=typedList(kind,id),note={id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),text:'',x:+x.toFixed(2),y:+y.toFixed(2),w:+w.toFixed(2)};
+            items.push(note);typedSave(kind,id,items);
+            typedLayer(parent,kind,id);
+            const textarea=parent.querySelector('.typed-note[data-typed-id="'+note.id+'"] textarea');if(textarea)textarea.focus();
+          });
+        }
+        layer.dataset.typedTarget=target;
+        layer.classList.toggle('is-placing',typedCanPlace(target));
+        layer.textContent='';
+        const items=typedList(kind,id);
+        for(const item of items){
+          const box=document.createElement('div');box.className='typed-note';box.dataset.typedId=item.id;
+          box.style.left=item.x+'%';box.style.top=item.y+'%';box.style.width=item.w+'%';
+          const area=document.createElement('textarea');area.value=item.text;area.rows=1;
+          area.setAttribute('aria-label','Печатная заметка');area.readOnly=!desktopTyping;
+          // Explicit container units keep text proportional to the sheet at any zoom.
+          area.style.setProperty('--typed-font',kind==='day'?'clamp(9px,2.15cqw,18px)':kind==='week'?'clamp(8px,4.5cqw,20px)':kind==='month'?'clamp(8px,6.1cqw,17px)':'clamp(9px,3.1cqw,18px)');
+          area.addEventListener('pointerdown',e=>e.stopPropagation());area.addEventListener('click',e=>e.stopPropagation());
+          const autosize=()=>{area.style.height='0px';area.style.height=Math.min(720,Math.max(area.scrollHeight,19))+'px';};
+          area.addEventListener('input',()=>{
+            const notes=typedList(kind,id),entry=notes.find(n=>n.id===item.id);
+            if(entry){entry.text=area.value.slice(0,3000);typedSave(kind,id,notes);}
+            autosize();
+          });
+          box.appendChild(area);
+          if(desktopTyping){
+            const actions=document.createElement('div');actions.className='typed-note-actions';
+            const drag=document.createElement('button');drag.type='button';drag.className='typed-drag';drag.textContent='⠿';drag.title='Перетащить запись';
+            let dragState=null;
+            drag.addEventListener('pointerdown',e=>{
+              e.preventDefault();e.stopPropagation();dragState={px:e.clientX,py:e.clientY,x:item.x,y:item.y};try{drag.setPointerCapture(e.pointerId);}catch(_){}
+            });
+            drag.addEventListener('pointermove',e=>{
+              if(!dragState)return;const r=layer.getBoundingClientRect();
+              item.x=Math.max(0,Math.min(100-item.w,dragState.x+(e.clientX-dragState.px)/r.width*100));
+              item.y=Math.max(0,Math.min(96,dragState.y+(e.clientY-dragState.py)/r.height*100));
+              box.style.left=item.x+'%';box.style.top=item.y+'%';
+            });
+            const finish=e=>{if(!dragState)return;dragState=null;
+              const notes=typedList(kind,id),entry=notes.find(n=>n.id===item.id);
+              if(entry){entry.x=+item.x.toFixed(2);entry.y=+item.y.toFixed(2);typedSave(kind,id,notes);}
+            };
+            drag.addEventListener('pointerup',finish);drag.addEventListener('pointercancel',finish);
+            const remove=document.createElement('button');remove.type='button';remove.className='typed-remove';remove.title='Удалить печатную заметку';remove.textContent='×';
+            remove.addEventListener('click',e=>{e.stopPropagation();if(confirm('Удалить эту печатную заметку?')){typedSave(kind,id,typedList(kind,id).filter(n=>n.id!==item.id));typedLayer(parent,kind,id);}});
+            actions.append(drag,remove);box.appendChild(actions);
+          }
+          layer.appendChild(box);requestAnimationFrame(autosize);
+        }
+      }
+      function paintDayTyped(c){
+        c.save();c.font='16px Arial';c.fillStyle='#284f66';c.textBaseline='top';
+        for(const note of typedList('day',iso(currentDate))){
+          const x=note.x/100*DW+3,y=note.y/100*DH,w=note.w/100*DW-8;
+          const lh=23;let at=y;
+          for(const paragraph of note.text.split('\n')){
+            let line='';for(const word of paragraph.split(/\s+/)){
+              const next=line?line+' '+word:word;
+              if(line&&c.measureText(next).width>w){c.fillText(line,x,at);at+=lh;line=word;}else line=next;
+            }
+            if(line)c.fillText(line,x,at);at+=lh;
+          }
+        }
+        c.restore();
+      }
       function loadDay(){
         const str=getItem(PREFIX+iso(currentDate));try{const d=JSON.parse(str||'[]');strokes=Array.isArray(d)?d.filter(validStroke):[];}catch(e){strokes=[];}
-        undoHistory=[];redoHistory=[];redraw();updateHistory();setStatus(storageOK?'Сохранено на устройстве · синхронизация…':'Хранилище браузера недоступно',!storageOK);
+        undoHistory=[];redoHistory=[];redraw();typedLayer(paper,'day',iso(currentDate));updateHistory();setStatus(storageOK?'Сохранено на устройстве · синхронизация…':'Хранилище браузера недоступно',!storageOK);
       }
       function validStroke(s){return s&&Array.isArray(s.points)&&s.points.length>0&&['pen','marker'].includes(s.kind);}
       function saveDay(){if(setItem(PREFIX+iso(currentDate),JSON.stringify(strokes)))setStatus('Сохранено на устройстве · синхронизация…');}
@@ -1068,11 +1214,11 @@
         if(changed){strokes=result;redraw();}return changed;
       }
       function eraseBetween(p){if(!eraserLast){eraseAt(p);eraserLast=p;return;}const a=eraserLast,d=Math.hypot(p.x-a.x,p.y-a.y),n=Math.max(1,Math.ceil(d/5));for(let k=1;k<=n;k++)eraseAt({x:a.x+(p.x-a.x)*k/n,y:a.y+(p.y-a.y)*k/n});eraserLast=p;}
-      function acceptPointer(e){if(tool==='hand'||(e.pointerType==='touch'&&Date.now()-lastPenTime<2500))return false;if(e.pointerType==='pen')lastPenTime=Date.now();if(e.isPrimary===false)return false;return true;}
+      function acceptPointer(e){if(tool==='text')return false;if(tool==='hand'||(e.pointerType==='touch'&&Date.now()-lastPenTime<2500))return false;if(e.pointerType==='pen')lastPenTime=Date.now();if(e.isPrimary===false)return false;return true;}
       function beginDraw(e){if(drawing||!acceptPointer(e))return; if(e.cancelable)e.preventDefault();drawing=true;activePointer=e.pointerId;try{canvas.setPointerCapture(e.pointerId);}catch(err){}snapshot();const p=pointFromEvent(e);if(tool==='eraser'){eraserLast=null;eraseBetween(p);}else{currentStroke={kind:tool,color:tool==='marker'?'#eac45d':color,width,points:[p]};strokes.push(currentStroke);redraw();}setStatus('Изменения не сохранены…',true);}
       function moveDraw(e){if(!drawing||e.pointerId!==activePointer)return;if(e.cancelable)e.preventDefault();const p=pointFromEvent(e);if(tool==='eraser')eraseBetween(p);else if(currentStroke){interpolate(currentStroke.points,p);redraw();}}
       function endDraw(e){if(!drawing)return;if(e&&e.pointerId!==activePointer)return;if(e&&tool!=='eraser'&&currentStroke)interpolate(currentStroke.points,pointFromEvent(e));drawing=false;currentStroke=null;eraserLast=null;if(e){try{canvas.releasePointerCapture(e.pointerId);}catch(err){}}activePointer=null;redraw();saveDay();updateHistory();}
-      function setTool(t){if(drawing)endDraw();tool=t;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));canvas.classList.toggle('hand',t==='hand');savePrefs();updateMobileZoomControls();}
+      function setTool(t){if(drawing)endDraw();if(t!=='text'&&typedMode==='day')typedMode=null;tool=t;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));canvas.classList.toggle('hand',t==='hand'||t==='text');typedModeUpdate();savePrefs();updateMobileZoomControls();}
       function setColor(c){color=c;document.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('selected',b.dataset.color===c));if(tool==='eraser'||tool==='hand')setTool('pen');savePrefs();}
       function setWidth(w){width=+w;$('lineSize').value=String(width);$('sizeText').textContent=width.toFixed(1);savePrefs();}
       function updateMobileZoomControls(){
@@ -1095,7 +1241,7 @@
         c.strokeStyle='#7199a9';c.lineWidth=2.25;c.strokeRect(46,107,708,986);for(const y of [385,622,848]){c.beginPath();c.moveTo(46,y);c.lineTo(754,y);c.stroke();}for(const [a,b]of [[107,385],[622,848]]){c.beginPath();c.moveTo(400,a);c.lineTo(400,b);c.stroke();}
         c.fillStyle='#4d8ba4';c.font='bold 19px Arial';c.fillText('ПЛАНЫ НА ДЕНЬ',46,45);c.font='bold 12px Arial';c.textAlign='right';c.fillText(currentDate.toLocaleDateString('ru-RU'),754,44);c.textAlign='left';c.fillStyle='#7293a0';c.font='10px Arial';const days=['ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ'];days.forEach((day,i)=>c.fillText(day,46+i*100,77));c.restore();
       }
-      function exportPage(){const out=document.createElement('canvas');out.width=1600;out.height=2240;const c=out.getContext('2d');rasterizeTemplate(c);configureContext(c);for(const s of strokes.filter(x=>x.kind==='marker'))paintStroke(c,s);for(const s of strokes.filter(x=>x.kind==='pen'))paintStroke(c,s);out.toBlob(blob=>{if(blob)downloadBlob(blob,'plan-na-den-'+iso(currentDate)+'.png');},'image/png');}
+      function exportPage(){const out=document.createElement('canvas');out.width=1600;out.height=2240;const c=out.getContext('2d');rasterizeTemplate(c);configureContext(c);for(const s of strokes.filter(x=>x.kind==='marker'))paintStroke(c,s);for(const s of strokes.filter(x=>x.kind==='pen'))paintStroke(c,s);paintDayTyped(c);out.toBlob(blob=>{if(blob)downloadBlob(blob,'plan-na-den-'+iso(currentDate)+'.png');},'image/png');}
       function exportJSON(){const days={};try{for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.startsWith(window.PlannerCloud.ns+PREFIX)){try{days[key.slice((window.PlannerCloud.ns+PREFIX).length)]=JSON.parse(localStorage.getItem(key));}catch(e){}}}}catch(e){days[iso(currentDate)]=strokes;}
         const weekNotes={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(window.PlannerCloud.ns+WEEK_NOTES))weekNotes[k.slice((window.PlannerCloud.ns+WEEK_NOTES).length)]=localStorage.getItem(k);}}catch(e){}
         const weekInk={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(window.PlannerCloud.ns+WEEK_INK)){try{weekInk[k.slice((window.PlannerCloud.ns+WEEK_INK).length)]=JSON.parse(localStorage.getItem(k));}catch(_){}}}}catch(_){}
@@ -1103,8 +1249,10 @@
         const monthFills={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(window.PlannerCloud.ns+MONTH_FILL)){const v=localStorage.getItem(k);if(/^#[0-9a-f]{6}$/i.test(v||''))monthFills[k.slice((window.PlannerCloud.ns+MONTH_FILL).length)]=v;}}}catch(_){}
         const handwrittenGoals=Object.fromEntries(['heading','week','month','cycle'].map(k=>[k,loadJSON(GOAL_HAND_KEY+k,[])]));
         const routineHandInk=Object.fromEntries([...routineHandRows.work,...routineHandRows.home].map(id=>[id,rhInk(id)]));
-        const payload={app:'lichny-planer',version:11,exported:new Date().toISOString(),days,weekNotes,weekInk,monthInk,monthFills,handwrittenGoals,goals,cycleStart,routineItems,routineDone,routineHandRows,routineHandInk,routineHandChecks,routineTypedNames,routineTextAlign,routinePriorities};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),'moi-zapisi-'+iso(currentDate)+'.json');msg('Резервная копия всех разделов готова');}
-      function importJSON(file){const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.app!=='lichny-planer'||![1,2,3,4,5,6,7,8,9,10,11].includes(data.version)||!data.days||typeof data.days!=='object')throw Error('Неподходящий формат копии');const entries=Object.entries(data.days).filter(([k,v])=>fromIso(k)&&Array.isArray(v));if(!confirm('Восстановить резервную копию? Совпадающие записи будут заменены.'))return;for(const [day,list]of entries)setItem(PREFIX+day,JSON.stringify(list.filter(validStroke)));
+        const typedEntries={};try{for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i),p=window.PlannerCloud.ns+TYPED_PREFIX;if(key.startsWith(p)){try{typedEntries[key.slice(p.length)]=JSON.parse(localStorage.getItem(key));}catch(_){}}}}catch(_){}
+        const payload={app:'lichny-planer',version:12,typedEntries,exported:new Date().toISOString(),days,weekNotes,weekInk,monthInk,monthFills,handwrittenGoals,goals,cycleStart,routineItems,routineDone,routineHandRows,routineHandInk,routineHandChecks,routineTypedNames,routineTextAlign,routinePriorities};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),'moi-zapisi-'+iso(currentDate)+'.json');msg('Резервная копия всех разделов готова');}
+      function importJSON(file){const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.app!=='lichny-planer'||![1,2,3,4,5,6,7,8,9,10,11,12].includes(data.version)||!data.days||typeof data.days!=='object')throw Error('Неподходящий формат копии');const entries=Object.entries(data.days).filter(([k,v])=>fromIso(k)&&Array.isArray(v));if(!confirm('Восстановить резервную копию? Совпадающие записи будут заменены.'))return;for(const [day,list]of entries)setItem(PREFIX+day,JSON.stringify(list.filter(validStroke)));
+        if(data.version>=12&&data.typedEntries&&typeof data.typedEntries==='object'){for(const [key,notes] of Object.entries(data.typedEntries)){if(/^(day|week|month):\d{4}-\d{2}-\d{2}$/.test(key)||/^goal:(heading|week|month|cycle)$/.test(key)){if(Array.isArray(notes))setItem(TYPED_PREFIX+key,JSON.stringify(notes.filter(n=>n&&typeof n.text==='string'&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Number.isFinite(n.w)).slice(0,100)));}}}
         if(data.version>=2){
           if(data.weekNotes&&typeof data.weekNotes==='object')for(const [date,note]of Object.entries(data.weekNotes)){if(fromIso(date)&&typeof note==='string')setItem(WEEK_NOTES+date,note);}
           if(data.version>=4&&data.weekInk&&typeof data.weekInk==='object')for(const [date,ink]of Object.entries(data.weekInk)){if(fromIso(date)&&Array.isArray(ink))setItem(WEEK_INK+date,JSON.stringify(ink.filter(validStroke)));}weekInkCache.clear();
@@ -1338,7 +1486,7 @@
       }
       function monthOpenEditor(date){
         if(monthPointer!==null)return;
-        monthEditorDate=date;$('monthEditorTitle').textContent='Запись на '+fromIso(date).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+        monthEditorDate=date;typedLayer($('monthZoomPad'),'month',date);$('monthEditorTitle').textContent='Запись на '+fromIso(date).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
         $('monthEditorOverlay').hidden=false;document.body.style.overflow='hidden';monthSetMode('pen');monthUpdateFillAppearance(date);monthDrawCanvas(date);
       }
       function monthCloseEditor(){
@@ -1365,7 +1513,7 @@
           head.appendChild(expand);cell.appendChild(head);
           const pad=document.createElement('div');pad.className='month-pad';
           const c=document.createElement('canvas');c.className='month-ink';c.width=640;c.height=480;c.setAttribute('aria-label','Рукописные заметки на '+date);
-          pad.appendChild(c);monthPreviewCanvases.set(date,c);monthBindCanvas(c,date);
+          pad.appendChild(c);typedLayer(pad,'month',date);monthPreviewCanvases.set(date,c);monthBindCanvas(c,date);
           pad.addEventListener('click',()=>{if(monthMode==='view')monthOpenEditor(date);});
           cell.addEventListener('click',e=>{if(monthMode==='fill'&&!e.target.closest('button'))monthSetFill(date,monthFillColor);});
           cell.appendChild(pad);grid.appendChild(cell);monthDrawCanvas(date);
@@ -1445,7 +1593,7 @@
         }
         pad.appendChild(rules);
         const c=document.createElement('canvas');c.className='week-ink';c.width=720;c.height=940;c.setAttribute('aria-label','Рукописный лист на '+date);
-        pad.appendChild(c);weekCanvases.set(date,c);
+        pad.appendChild(c);typedLayer(pad,'week',date);weekCanvases.set(date,c);
         c.addEventListener('pointerdown',e=>weekPointerDown(e,date,c));
         c.addEventListener('pointermove',e=>weekPointerMove(e,date,c));
         c.addEventListener('pointerup',e=>weekPointerUp(e,date,c));
@@ -1495,12 +1643,13 @@
           const write=document.createElement('button');write.className='btn week-activate';write.type='button';write.setAttribute('aria-pressed','false');write.textContent='✍ Писать';
           write.addEventListener('click',()=>{const active=!pad.classList.contains('is-writing');pad.classList.toggle('is-writing',active);write.setAttribute('aria-pressed',String(active));write.textContent=active?'✓ Пишу':'✍ Писать';weekSetMode('pen');});
           const zoom=document.createElement('button');zoom.className='btn';zoom.type='button';zoom.textContent='⤢ Увеличить';zoom.setAttribute('aria-label','Увеличить лист '+names[i]);zoom.addEventListener('click',()=>weekOpenEditor(date,card,pad));
-          actions.append(write,zoom);card.appendChild(actions);
+          const typed=document.createElement('button');typed.className='btn desktop-text-tool';typed.type='button';typed.dataset.typedWeek=date;typed.textContent='⌨ Текст';typed.addEventListener('click',()=>typedToggle('week:'+date));
+          actions.append(write,zoom,typed);card.appendChild(actions);typedModeUpdate();
           const info=document.createElement('div');info.className='week-indicator';info.id='weekInfo-'+date;info.textContent=weekInkWritten(date)?'✎ Есть рукописные записи':'15 строк для записи';card.appendChild(info);
           // Old typed notes are preserved, still editable in a collapsed section.
           const printed=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Печатные заметки';printed.appendChild(summary);
           const note=document.createElement('textarea');note.placeholder='Текстовые планы…';note.setAttribute('aria-label','Печатные планы на '+d.toLocaleDateString('ru-RU'));
-          note.value=getItem(WEEK_NOTES+date)||'';note.addEventListener('input',()=>setItem(WEEK_NOTES+date,note.value));printed.appendChild(note);card.appendChild(printed);
+          note.value=getItem(WEEK_NOTES+date)||'';note.readOnly=!desktopTyping;note.addEventListener('input',()=>{if(desktopTyping)setItem(WEEK_NOTES+date,note.value);});printed.appendChild(note);card.appendChild(printed);
           const open=document.createElement('button');open.className='btn';open.style.cssText='margin-top:9px;width:100%;min-height:31px;font-size:11px;padding:5px;';open.type='button';open.textContent='Открыть день ›';open.addEventListener('click',()=>{switchDate(d);showView('day');});card.appendChild(open);
           grid.appendChild(card);
         }
@@ -1598,7 +1747,7 @@
         const title=key==='heading';$('goalZoomPad').classList.toggle('goal-zoom-heading',title);
         $('goalZoomLines').setAttribute('viewBox',title?'0 0 960 125':'0 0 480 840');
         $('goalZoomLines').innerHTML=goalRuling(key);
-        $('goalEditorOverlay').hidden=false;document.body.style.overflow='hidden';
+        $('goalEditorOverlay').hidden=false;document.body.style.overflow='hidden';typedLayer($('goalZoomPad'),'goal',key);
         requestAnimationFrame(()=>goalRedraw(key));
       }
       function goalZoomClose(){
@@ -1607,7 +1756,7 @@
       }
       function renderGoals(){
         document.querySelectorAll('[data-goal-lines]').forEach(svg=>svg.innerHTML=goalRuling(svg.dataset.goalLines));
-        for(const key of ['heading','week','month','cycle'])goalRedraw(key);
+        for(const key of ['heading','week','month','cycle']){goalRedraw(key);typedLayer(document.querySelector('[data-goal-pad="'+key+'"]'),'goal',key);}
         // Preserve typed goals in a read-only archive, with no automatic migration.
         const old=$('legacyGoals'),list=$('legacyGoalList');list.textContent='';
         old.hidden=!goals.length;
@@ -1634,6 +1783,7 @@
         }else if(btn.dataset.goalEnlarge)goalZoomOpen(btn.dataset.goalEnlarge);
       });
       $('goalEditorClose').addEventListener('click',goalZoomClose);
+      $('goalTypeBtn').addEventListener('click',()=>typedToggle('goal'));
       $('goalEditorOverlay').addEventListener('click',e=>{if(e.target===$('goalEditorOverlay'))goalZoomClose();});
       $('goalModalPen').addEventListener('click',()=>goalSetMode('pen'));
       $('goalModalEraser').addEventListener('click',()=>goalSetMode('eraser'));
@@ -1928,7 +2078,7 @@
       $('nextBtn').addEventListener('click',()=>switchDate(offsetDate(currentDate,1)));
       $('todayBtn').addEventListener('click',()=>switchDate(new Date()));
       $('datePicker').addEventListener('change',e=>{const d=fromIso(e.target.value);if(d)switchDate(d);});
-      document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
+      document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>b.dataset.tool==='text'?typedToggle('day'):setTool(b.dataset.tool)));
       document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>setColor(b.dataset.color)));
       $('lineSize').addEventListener('input',e=>setWidth(e.target.value));
       $('undoBtn').addEventListener('click',undo);$('redoBtn').addEventListener('click',redo);
@@ -1943,7 +2093,7 @@
       $('exportPng').addEventListener('click',exportPage);$('exportJson').addEventListener('click',exportJSON);$('importBtn').addEventListener('click',()=>$('fileImport').click());$('fileImport').addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importJSON(f);e.target.value='';});$('printBtn').addEventListener('click',()=>window.print());
       canvas.addEventListener('pointerdown',beginDraw);canvas.addEventListener('pointermove',moveDraw);canvas.addEventListener('pointerup',endDraw);canvas.addEventListener('pointercancel',endDraw);canvas.addEventListener('lostpointercapture',()=>{if(drawing)endDraw();});
       canvas.addEventListener('contextmenu',e=>e.preventDefault());
-      window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}});
+      window.addEventListener('keydown',e=>{if(['TEXTAREA','INPUT'].includes(e.target?.tagName)||e.target?.isContentEditable)return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}});
       window.addEventListener('resize',resizeCanvas);
       if('ResizeObserver'in window)new ResizeObserver(resizeCanvas).observe(paper);
       setWidth(width);setColor(color);setTool('pen');
@@ -1952,6 +2102,7 @@
       // Tabs and calendars
       document.querySelectorAll('.app-tab').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
       // Month calendar handwriting actions, independent of the daily and weekly pens.
+      $('monthTopType').addEventListener('click',()=>typedToggle('month'));
       $('monthTopPen').addEventListener('click',()=>monthSetMode(monthMode==='pen'?'view':'pen'));
       $('monthTopEraser').addEventListener('click',()=>monthSetMode(monthMode==='eraser'?'view':'eraser'));
       $('monthTopFill').addEventListener('click',()=>monthSetMode(monthMode==='fill'?'view':'fill'));
@@ -2330,7 +2481,7 @@
     }
   }
   init();
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
   }
 })();
